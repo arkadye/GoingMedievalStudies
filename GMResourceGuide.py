@@ -21,14 +21,9 @@ def get_name(item):
         return item["id"]
     return None
 
-def split_at_capital_letters(input_str):
-    splitted = re.sub('([A-Z][a-z]+)', r' \1', re.sub('([A-Z]+)', r' \1', input_str)).split()
-    return splitted
-
 def get_categories(sorting_group):
-    splitted = split_at_capital_letters(sorting_group)
-    result = str(",").join(splitted)
-    return result
+    splitted = re.sub('([A-Z][a-z]+)', r' \1', re.sub('([A-Z]+)', r' \1', sorting_group)).split()
+    return splitted
 
 for filename in [RESOURCE_FILE,BUILDING_FILE,TRAP_FILE,PRODUCTION_TABLE_FILE]:
     with open(filename,'r') as file:
@@ -42,7 +37,9 @@ with open(RESOURCE_FILE,'r') as file:
     resources = data["repository"]
     
     if MODE == MODE_TRADING:
-        print("Resource,Value,Nutrition,Weight,ValEfficiency,NutritionEfficiency,Categories1,Categories2,Categories3,Categories4")
+        header = "Resource,Value,Nutrition,Weight,ValEfficiency,NutritionEfficiency,Categories1,Categories2,Categories3,Categories4"
+        num_categories = header.count(',') + 1
+        print(header)
         for item in item_data:
             name = get_name(item)
             if "weight" in item:
@@ -53,10 +50,16 @@ with open(RESOURCE_FILE,'r') as file:
             nutrition = 0.0
             if "nutrition" in item:
                 nutrition = float(item["nutrition"])
-            categories = ""
+            categories = []
             if "sortingGroup" in item:
                 sorting_group = item["sortingGroup"]
                 categories = get_categories(sorting_group)
             value_efficiency = value / weight
             nutrition_efficiency = nutrition / weight
-            print(str(",").join([name,str(value),str(nutrition),str(weight),str(value_efficiency),str(nutrition_efficiency),categories]))
+
+            # Extend result until it has enough columns
+            result = [name,str(value),str(nutrition),str(weight),str(value_efficiency),str(nutrition_efficiency)] + categories
+            while len(result) < num_categories:
+                result.append("")
+            
+            print(str(",").join(result))
